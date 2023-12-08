@@ -1,33 +1,30 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { User, UserDocument } from '../../schemas/user.chema'
-import { Model } from 'mongoose'
+import { User, UserDocument, UserPublicProperty } from './user.schema'
+import { Model, Types } from 'mongoose'
 import { BodyUpdatePasswordDto, BodyCreateUserDto } from './users.dto'
 import { PaginationRequest, PaginationResponse } from '../../common/pagination'
 import { hash, compare } from 'bcrypt'
-import { v4 } from 'uuid'
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async createUser(data: BodyCreateUserDto): Promise<User> {
-    const uid = v4()
+  async createUser(data: BodyCreateUserDto): Promise<UserPublicProperty> {
     data.password = await hash(data.password, 10)
 
     const user = await this.userModel.create({
       ...data,
-      id: uid,
     })
 
-    return {
-      _id: user._id,
-      id: user.id,
-      username: user.username,
-    }
+    delete user.password
+
+    return user
   }
 
-  async fetchUser(pagination: PaginationRequest): Promise<PaginationResponse<User>> {
+  async fetchUser(
+    pagination: PaginationRequest,
+  ): Promise<PaginationResponse<UserPublicProperty>> {
     const [data, total] = await Promise.all([
       this.userModel
         .find()
@@ -38,11 +35,11 @@ export class UsersService {
     ])
 
     return {
-      data: data.map((user) => ({
-        _id: user._id,
-        id: user.id,
-        username: user.username,
-      })),
+      data: data.map((user) => {
+        delete user.password
+
+        return user
+      }),
       page: +pagination.page,
       size: +pagination.size,
       total_item: total,
@@ -51,13 +48,16 @@ export class UsersService {
   }
 
   async getUserById(id: string): Promise<User> {
-    const user = await this.userModel.findOne({ id }).exec()
+    const user = await this.userModel.findOne({ _id: new Types.ObjectId(id) }).exec()
 
     return user
   }
 
   async updateUser(id: string, data: Partial<User>): Promise<number> {
-    const user = await this.userModel.findOneAndUpdate({ id }, data)
+    const user = await this.userModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      data,
+    )
     if (!user) {
       throw new NotFoundException('User not found')
     }
@@ -81,7 +81,7 @@ export class UsersService {
   }
 
   async deleteUser(id: string): Promise<number> {
-    const user = await this.userModel.findOneAndDelete({ id })
+    const user = await this.userModel.findOneAndDelete({ _id: new Types.ObjectId(id) })
     if (!user) {
       throw new NotFoundException('User not found')
     }

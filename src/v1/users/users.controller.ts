@@ -12,7 +12,7 @@ import {
   Put,
 } from '@nestjs/common'
 import { UsersService } from './users.service'
-import { User } from '../../schemas/user.chema'
+import { User, UserPublicProperty } from './user.schema'
 import {
   BodyCreateUserDto,
   BodyUpdatePasswordDto,
@@ -24,7 +24,7 @@ import {
   createUserValidation,
   updatePasswordUserValidation,
   updateUserValidation,
-} from '../../validation/users.validation'
+} from './users.validation'
 import { ResponseData, ResponseError, ResponseResult } from '../../common/response'
 import {
   ApiNotFoundResponse,
@@ -46,7 +46,9 @@ export class UsersController {
     description: 'The user records',
     type: ResponseResult<User>,
   })
-  async createUser(@Body() user: BodyCreateUserDto): Promise<ResponseResult<User>> {
+  async createUser(
+    @Body() user: BodyCreateUserDto,
+  ): Promise<ResponseResult<UserPublicProperty>> {
     const data = await this.userService.createUser(user)
     return {
       statusCode: 201,
@@ -60,7 +62,9 @@ export class UsersController {
     description: 'The user records',
     type: ResponseResult<User>,
   })
-  async fetchUsers(@Query() query: QueryFetchUserDto): Promise<ResponseResult<User>> {
+  async fetchUsers(
+    @Query() query: QueryFetchUserDto,
+  ): Promise<ResponseResult<UserPublicProperty>> {
     const { page = 1, size = 10 } = query
 
     const data = await this.userService.fetchUser({ page, size })
@@ -77,15 +81,16 @@ export class UsersController {
     description: 'The user records',
     type: ResponseResult<User>,
   })
-  async findUserById(@Param('id') id: string): Promise<ResponseResult<User>> {
+  async findUserById(
+    @Param('id') id: string,
+  ): Promise<ResponseResult<UserPublicProperty>> {
     const data = await this.userService.getUserById(id)
+
+    delete data.password
+
     return {
       statusCode: 200,
-      data: {
-        _id: data._id,
-        id: data.id,
-        username: data.username,
-      },
+      data,
     }
   }
 
