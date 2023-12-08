@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { UserLevel } from './user.schema'
 
 export class BodyCreateUserDto {
   @ApiProperty({
@@ -12,6 +13,13 @@ export class BodyCreateUserDto {
     format: 'string',
   })
   password: string
+
+  @ApiProperty({
+    title: 'Level',
+    format: 'string',
+    example: UserLevel.ADMIN,
+  })
+  level: UserLevel
 }
 
 export class BodyUpdateUserDto {
@@ -20,6 +28,13 @@ export class BodyUpdateUserDto {
     format: 'string',
   })
   username: string
+
+  @ApiProperty({
+    title: 'Level',
+    format: 'string',
+    example: UserLevel.ADMIN,
+  })
+  level: UserLevel
 }
 
 export class QueryFetchUserDto {

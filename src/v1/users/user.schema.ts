@@ -1,6 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose, { HydratedDocument } from 'mongoose'
-import * as uuid from 'uuid'
+
+export enum UserLevel {
+  SUPER = 'super',
+  HEADMASTER = 'headmaster',
+  ADMIN = 'admin',
+  TEACHER = 'teacher',
+  STUDENT = 'student',
+  STAFF = 'staff',
+}
 
 @Schema({
   timestamps: true,
@@ -9,19 +17,17 @@ import * as uuid from 'uuid'
 export class User {
   _id?: mongoose.Types.ObjectId
 
-  @Prop({
-    default: uuid,
-    index: true,
-  })
-  id: string
-
   @Prop({ required: true })
   username: string
 
   @Prop({ required: true })
-  password?: string
+  password: string
+
+  @Prop()
+  level: UserLevel
 }
 
 export type UserDocument = HydratedDocument<User>
 export type UserInterface = Pick<UserDocument, keyof User | '_id'>
+export type UserPublicProperty = Omit<User, 'password'>
 export const UserSchema = SchemaFactory.createForClass(User)
