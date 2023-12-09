@@ -4,14 +4,22 @@ import { IUserLevel } from './level.interface'
 import { UserLevelSuper } from './super'
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { BaseUserLevel } from './base'
+import { UserLevelHeadmaster } from './headmaster'
+import { UserLevelAdmin } from './admin'
+import { UserLevelTeacher } from './teacher'
+import { UserLevelStudent } from './student'
 
 export class UserLevelProcessor implements IUserLevel {
   private user: IUserLevel
   private userLevels = {
     [UserLevel.SUPER]: UserLevelSuper,
+    [UserLevel.HEADMASTER]: UserLevelHeadmaster,
+    [UserLevel.ADMIN]: UserLevelAdmin,
+    [UserLevel.TEACHER]: UserLevelTeacher,
+    [UserLevel.STUDENT]: UserLevelStudent,
   }
 
-  constructor(userModel: Model<UserDocument>, data: Partial<UserDocument>) {
+  constructor(userModel: Model<UserDocument>, data: UserDocument | null) {
     const userLevel = this.userLevels[data.level]
     if (!userLevel) {
       throw new InternalServerErrorException('Invalid user level')

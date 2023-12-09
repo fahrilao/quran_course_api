@@ -7,7 +7,6 @@ export enum UserLevel {
   ADMIN = 'admin',
   TEACHER = 'teacher',
   STUDENT = 'student',
-  STAFF = 'staff',
 }
 
 @Schema({
