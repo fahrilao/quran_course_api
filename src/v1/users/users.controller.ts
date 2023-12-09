@@ -86,8 +86,6 @@ export class UsersController {
   ): Promise<ResponseResult<UserPublicProperty>> {
     const data = await this.userService.getUserById(id)
 
-    delete data.password
-
     return {
       statusCode: 200,
       data,
@@ -109,11 +107,11 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: BodyUpdateUserDto,
   ): Promise<ResponseData> {
-    await this.userService.updateUser(id, body)
+    const affected = await this.userService.updateUser(id, body)
 
     return {
       statusCode: 200,
-      message: 'User updated successfully',
+      message: `Total ${affected} affected`,
     }
   }
 
@@ -132,10 +130,10 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: BodyUpdatePasswordDto,
   ): Promise<ResponseData> {
-    await this.userService.updatePasswordUser(id, body)
+    const affected = await this.userService.updatePasswordUser(id, body)
     return {
       statusCode: 200,
-      message: 'Password updated successfully',
+      message: `Total ${affected} affected`,
     }
   }
 
@@ -150,10 +148,10 @@ export class UsersController {
   })
   @ApiOperation({ summary: 'Delete User by ID' })
   async deleteUserById(@Param('id') id: string): Promise<ResponseData> {
-    await this.userService.deleteUser(id)
+    const affected = await this.userService.deleteUser(id)
     return {
       statusCode: 200,
-      message: 'User deleted successfully',
+      message: `Total ${affected} affected`,
     }
   }
 }

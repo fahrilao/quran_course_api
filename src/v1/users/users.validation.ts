@@ -5,7 +5,7 @@ export const createUserValidation = Joi.object({
   username: Joi.string().required(),
   password: Joi.string().required(),
   level: Joi.string()
-    .valid(...Object.keys(UserLevel))
+    .valid(...Object.values(UserLevel))
     .required(),
 })
 
@@ -17,6 +17,6 @@ export const updatePasswordUserValidation = Joi.object({
 export const updateUserValidation = Joi.object({
   username: Joi.string().required(),
   level: Joi.string()
-    .valid(...Object.keys(UserLevel))
+    .valid(...Object.values(UserLevel))
     .required(),
 })

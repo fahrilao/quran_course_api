@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose'
 import { BodyUpdatePasswordDto, BodyCreateUserDto } from './users.dto'
 import { PaginationRequest, PaginationResponse } from '../../common/pagination'
 import { hash, compare } from 'bcrypt'
+import { UserLevelProcessor } from './levels/level.processor'
 
 @Injectable()
 export class UsersService {
@@ -13,13 +14,9 @@ export class UsersService {
   async createUser(data: BodyCreateUserDto): Promise<UserPublicProperty> {
     data.password = await hash(data.password, 10)
 
-    const user = await this.userModel.create({
-      ...data,
-    })
-
-    delete user.password
-
-    return user
+    const user = new UserLevelProcessor(this.userModel, data)
+    await user.create()
+    return user.toObject()
   }
 
   async fetchUser(
@@ -36,9 +33,8 @@ export class UsersService {
 
     return {
       data: data.map((user) => {
-        delete user.password
-
-        return user
+        const { password, ...res } = user.toObject()
+        return res
       }),
       page: +pagination.page,
       size: +pagination.size,
@@ -47,45 +43,38 @@ export class UsersService {
     }
   }
 
-  async getUserById(id: string): Promise<User> {
-    const user = await this.userModel.findOne({ _id: new Types.ObjectId(id) }).exec()
-
-    return user
+  async getUserById(id: string): Promise<UserPublicProperty> {
+    const user = await UserLevelProcessor.get(this.userModel, id)
+    return user.toObject()
   }
 
   async updateUser(id: string, data: Partial<User>): Promise<number> {
-    const user = await this.userModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(id) },
-      data,
-    )
-    if (!user) {
+    const user = await UserLevelProcessor.get(this.userModel, id)
+    if (!user.getProperty('username')) {
       throw new NotFoundException('User not found')
     }
-
-    return 1
+    return await user.update(data)
   }
 
-  async updatePasswordUser(id: string, data: BodyUpdatePasswordDto): Promise<number> {
-    const user = await this.getUserById(id)
-    if (!user) {
-      throw new NotFoundException('User does not exist')
+  async updatePasswordUser(id: string, body: BodyUpdatePasswordDto): Promise<number> {
+    const user = await UserLevelProcessor.get(this.userModel, id)
+    if (!user.getProperty('username')) {
+      throw new NotFoundException('User not found')
     }
-
-    const isPasswordMatch = await compare(data.old_password, user.password)
+    const isPasswordMatch = await compare(body.old_password, user.getProperty('password'))
     if (!isPasswordMatch) {
       throw new BadRequestException('Password did not match with the old password')
     }
 
-    user.password = await hash(data.new_password, 10)
-    return await this.updateUser(id, { password: user.password })
+    const newpassword = await hash(body.new_password, 10)
+    return await user.update({ password: newpassword })
   }
 
   async deleteUser(id: string): Promise<number> {
-    const user = await this.userModel.findOneAndDelete({ _id: new Types.ObjectId(id) })
-    if (!user) {
+    const user = await UserLevelProcessor.get(this.userModel, id)
+    if (!user.getProperty('username')) {
       throw new NotFoundException('User not found')
     }
-
-    return 1
+    return await user.delete()
   }
 }

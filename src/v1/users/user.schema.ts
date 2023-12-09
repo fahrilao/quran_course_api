@@ -11,7 +11,6 @@ export enum UserLevel {
 }
 
 @Schema({
-  timestamps: true,
   collection: 'users',
 })
 export class User {
@@ -25,9 +24,14 @@ export class User {
 
   @Prop()
   level: UserLevel
+
+  @Prop({ default: () => new Date(), type: Date, name: 'created_at' })
+  created_at: string
+
+  @Prop({ default: () => new Date(), type: Date, name: 'updated_at' })
+  updated_at: string
 }
 
 export type UserDocument = HydratedDocument<User>
-export type UserInterface = Pick<UserDocument, keyof User | '_id'>
 export type UserPublicProperty = Omit<User, 'password'>
 export const UserSchema = SchemaFactory.createForClass(User)
