@@ -19,7 +19,7 @@ export class UserLevelProcessor {
     [UserLevel.STUDENT]: UserLevelStudent,
   }
 
-  constructor(userModel: Model<UserDocument>, data: UserDocument | null) {
+  constructor(userModel: Model<UserDocument>, data: User | null) {
     const userLevel = this.userLevels[data.level]
     if (!userLevel) {
       throw new InternalServerErrorException('Invalid user level')

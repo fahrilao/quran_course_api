@@ -25,10 +25,10 @@ export class User {
   level: UserLevel
 
   @Prop({ default: () => new Date(), type: Date, name: 'created_at' })
-  created_at: string
+  created_at?: string
 
   @Prop({ default: () => new Date(), type: Date, name: 'updated_at' })
-  updated_at: string
+  updated_at?: string
 }
 
 export type UserDocument = HydratedDocument<User>

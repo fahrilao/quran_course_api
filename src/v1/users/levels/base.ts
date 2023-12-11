@@ -1,13 +1,10 @@
-import { Document, Model, Types } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import { User, UserDocument, UserPublicProperty } from '../user.schema'
 import { InternalServerErrorException } from '@nestjs/common'
 import { IUserLevel } from './level.interface'
 
 export class BaseUserLevel implements IUserLevel {
-  constructor(
-    private userModel: Model<UserDocument>,
-    private data: UserDocument | null,
-  ) {}
+  constructor(private userModel: Model<UserDocument>, private data: User | null) {}
 
   getProperty<T extends keyof User>(key: T): User[T] {
     return this.data[key]

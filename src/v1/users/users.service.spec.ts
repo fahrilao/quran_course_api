@@ -33,9 +33,9 @@ describe('UsersService', () => {
           useValue: {
             find: jest.fn(),
             findOne: jest.fn().mockReturnThis(),
-            findOneAndUpdate: jest.fn(),
+            updateOne: jest.fn(),
             create: jest.fn(),
-            findOneAndDelete: jest.fn(),
+            deleteOne: jest.fn(),
             countDocuments: jest.fn(),
           },
         },
@@ -73,18 +73,27 @@ describe('UsersService', () => {
   })
 
   it('should fetch array of users', async () => {
-    const mockUserBody: UserDocument[] = [
+    const mockUser = [
       {
         _id: new mongoose.Types.ObjectId('6572740145f495910232a390'),
         username: 'dummy',
-        password: '123456789',
+        password: 'hashpassword',
+        level: UserLevel.SUPER,
+        toObject: function () {
+          return {
+            _id: this._id,
+            username: this.username,
+            password: this.password,
+            level: UserLevel.SUPER,
+          }
+        },
       },
-    ] as UserDocument[]
+    ]
 
     const modelFind = jest.spyOn(model, 'find').mockReturnValue({
       limit: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
-      exec: () => mockUserBody,
+      exec: () => mockUser,
     } as any)
 
     const modelCount = jest.spyOn(model, 'countDocuments').mockReturnValue(1 as any)
@@ -99,9 +108,9 @@ describe('UsersService', () => {
     expect(fetch.page).toEqual(pagination.page)
     expect(fetch.data).toHaveLength(1)
     expect(fetch.data).toEqual(
-      mockUserBody.map((user) => {
-        delete user.password
-        return user
+      mockUser.map((user) => {
+        const { password, ...data } = user.toObject()
+        return data
       }),
     )
     expect(modelFind).toHaveBeenCalled()
@@ -109,42 +118,56 @@ describe('UsersService', () => {
   })
 
   it('should return one user', async () => {
-    const mockUser: UserDocument = {
+    const mockUser = {
       _id: new mongoose.Types.ObjectId('6572740145f495910232a390'),
       username: 'dummy',
-      password: '123456789',
-    } as UserDocument
+      password: 'hashpassword',
+      level: UserLevel.SUPER,
+      toObject: function () {
+        return {
+          _id: this._id,
+          username: this.username,
+          password: this.password,
+          level: UserLevel.SUPER,
+        }
+      },
+    }
 
-    const findOneModel = jest.spyOn(model, 'findOne').mockReturnValue({
-      exec: jest.fn().mockReturnValue(mockUser),
-    } as any)
-
+    const findOneModel = jest.spyOn(model, 'findOne').mockReturnValue(mockUser as any)
     const findOne = await userService.getUserById(mockUser._id.toString())
-    expect(findOne).toEqual(mockUser)
+    const { password, ...mockRes } = mockUser.toObject()
+
+    expect(findOne).toEqual(mockRes)
     expect(findOneModel).toHaveBeenCalledWith({
       _id: mockUser._id,
     })
   })
 
   it('should update password user', async () => {
-    const mockUser: UserDocument = {
+    const mockUser = {
       _id: new mongoose.Types.ObjectId('6572740145f495910232a390'),
       username: 'dummy',
       password: 'hashpassword',
-    } as UserDocument
+      level: UserLevel.SUPER,
+      toObject: function () {
+        return {
+          _id: this._id,
+          username: this.username,
+          password: this.password,
+          level: UserLevel.SUPER,
+        }
+      },
+    }
 
     const body: BodyUpdatePasswordDto = {
       old_password: 'oldpassword',
       new_password: 'newpassword',
     }
 
-    const findOneModel = jest.spyOn(model, 'findOne').mockReturnValue({
-      exec: jest.fn().mockReturnValue(mockUser),
-    } as any)
-
-    const findOneAndUpdateModel = jest
-      .spyOn(model, 'findOneAndUpdate')
-      .mockReturnValue(mockUser as any)
+    const findOne = jest.spyOn(model, 'findOne').mockReturnValue(mockUser as any)
+    const updateOne = jest
+      .spyOn(model, 'updateOne')
+      .mockReturnValue({ modifiedCount: 1 } as any)
 
     const updatePassword = await userService.updatePasswordUser(
       mockUser._id.toString(),
@@ -152,19 +175,28 @@ describe('UsersService', () => {
     )
 
     expect(updatePassword).toEqual(1)
-    expect(findOneAndUpdateModel).toHaveBeenCalledWith(
+    expect(updateOne).toHaveBeenCalledWith(
       { _id: mockUser._id },
       { password: 'hashpassword' },
     )
-    expect(findOneModel).toHaveBeenCalledWith({ _id: mockUser._id })
+    expect(findOne).toHaveBeenCalledWith({ _id: mockUser._id })
   })
 
   it('should update user', async () => {
-    const mockUser: UserDocument = {
+    const mockUser = {
       _id: new mongoose.Types.ObjectId('6572740145f495910232a390'),
       username: 'dummy',
       password: 'hashpassword',
-    } as UserDocument
+      level: UserLevel.SUPER,
+      toObject: function () {
+        return {
+          _id: this._id,
+          username: this.username,
+          password: this.password,
+          level: UserLevel.SUPER,
+        }
+      },
+    }
 
     const body: User = {
       username: 'dummicous',
@@ -172,30 +204,43 @@ describe('UsersService', () => {
       level: UserLevel.SUPER,
     }
 
-    const findOneAndUpdateModel = jest
-      .spyOn(model, 'findOneAndUpdate')
-      .mockReturnValue(mockUser as any)
+    const findOne = jest.spyOn(model, 'findOne').mockReturnValue(mockUser as any)
+    const updateOne = jest
+      .spyOn(model, 'updateOne')
+      .mockReturnValue({ modifiedCount: 1 } as any)
 
     const updateUser = await userService.updateUser(mockUser._id.toString(), body)
 
     expect(updateUser).toEqual(1)
-    expect(findOneAndUpdateModel).toHaveBeenCalledWith({ _id: mockUser._id }, body)
+    expect(findOne).toHaveBeenCalledWith({ _id: mockUser._id })
+    expect(updateOne).toHaveBeenCalledWith({ _id: mockUser._id }, body)
   })
 
   it('should remove user', async () => {
-    const mockUser: UserDocument = {
+    const mockUser = {
       _id: new mongoose.Types.ObjectId('6572740145f495910232a390'),
       username: 'dummy',
       password: 'hashpassword',
-    } as UserDocument
+      level: UserLevel.SUPER,
+      toObject: function () {
+        return {
+          _id: this._id,
+          username: this.username,
+          password: this.password,
+          level: this.level,
+        }
+      },
+    }
 
-    const findOneAndDeleteModel = jest
-      .spyOn(model, 'findOneAndDelete')
-      .mockReturnValue(mockUser as any)
+    const findOne = jest.spyOn(model, 'findOne').mockReturnValue(mockUser as any)
+    const deleteOne = jest
+      .spyOn(model, 'deleteOne')
+      .mockReturnValue({ deletedCount: 1 } as any)
 
     const deleteUser = await userService.deleteUser(mockUser._id.toString())
 
     expect(deleteUser).toEqual(1)
-    expect(findOneAndDeleteModel).toHaveBeenCalledWith({ _id: mockUser._id })
+    expect(findOne).toHaveBeenCalledWith({ _id: mockUser._id })
+    expect(deleteOne).toHaveBeenCalledWith({ _id: mockUser._id })
   })
 })
