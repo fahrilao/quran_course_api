@@ -9,7 +9,7 @@ import { UserLevelAdmin } from './admin'
 import { UserLevelTeacher } from './teacher'
 import { UserLevelStudent } from './student'
 
-export class UserLevelProcessor implements IUserLevel {
+export class UserLevelProcessor {
   private user: IUserLevel
   private userLevels = {
     [UserLevel.SUPER]: UserLevelSuper,
@@ -39,7 +39,7 @@ export class UserLevelProcessor implements IUserLevel {
   static async get(
     userModel: Model<UserDocument>,
     id: string | Types.ObjectId,
-  ): Promise<IUserLevel> {
+  ): Promise<UserLevelProcessor> {
     const user = new BaseUserLevel(userModel, null)
     const userData = await user.get(id)
     if (!userData) throw new NotFoundException('User not found')
