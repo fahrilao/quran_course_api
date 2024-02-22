@@ -11,7 +11,6 @@ async function bootstrap() {
       .setTitle('Quran Course Documentation')
       .setDescription("The Quran API's description")
       .setVersion('1.0')
-      .addTag('users')
       .build()
     const document = SwaggerModule.createDocument(app, config)
     SwaggerModule.setup('/', app, document)
